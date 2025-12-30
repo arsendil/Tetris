@@ -36,8 +36,8 @@ public:
     bool isActive;
 
 public:
-    tetrimino(int pix_l, int colour, board *gameboard);
-    board *gameboard;
+    tetrimino(int pix_l, int colour, board* gameboard);
+    board* gameboard;
     void drawBlocks();
     void keyPressEvent(QKeyEvent * event);
     void setToBoard();

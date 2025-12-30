@@ -1,7 +1,5 @@
 #include "board.h"
 
-
-
 board::board(int pix_l): pix_l {pix_l}
 {
     score = 0;
@@ -11,9 +9,8 @@ board::board(int pix_l): pix_l {pix_l}
     drawScore();
 }
 
-
 void
-board::checkLines(QGraphicsLineItem *checkLine)
+board::checkLines(QGraphicsLineItem* checkLine)
 {
     QList<QGraphicsItem *> colliding_items;
     //QList<QGraphicsItem *> items_above;
