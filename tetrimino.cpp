@@ -1,101 +1,125 @@
 #include "tetrimino.h"
 
-tetrimino::tetrimino(int tile_size, int colour)
-    : tile_size{tile_size}
-    , colour{colour}
+tetrimino::tetrimino(const int pix_l, int colour, board *gameboard): pix_l{pix_l}, colour{colour}, gameboard{gameboard}
 {
     drawBlocks();
 
     this->setFlag(QGraphicsItem::ItemIsFocusable);
     this->setFocus();
 
-    int time = 1000;
-    QTimer* timer = new QTimer(this);
-    connect(timer, SIGNAL(timeout()), this, SLOT(moveDown()));
+    int time = 1000 - (gameboard->score*10);
+
+    QTimer * timer = new QTimer();
+    connect(timer,SIGNAL(timeout()),this,SLOT(moveDown()));
 
     timer->start(time);
-}
-
-void
-tetrimino::drawBlocks()
-{
-    QPixmap image(":/Pictures/images/tiles.png");
-
-    QRect recto(colour * tile_size, 0, tile_size, tile_size);
-    QPixmap clipped;
-    clipped = image.copy(recto);
-
-    for (int i = 0; i < 4; ++i) {
-        quad[i].x = figures[colour][i] % 2;
-        quad[i].y = figures[colour][i] / 2;
-    }
-
-    for (int i = 0; i < 4; ++i) {
-        QGraphicsPixmapItem* tet = new QGraphicsPixmapItem();
-
-        tet->setPixmap(clipped);
-        tet->setPos(quad[i].x * tile_size, quad[i].y * tile_size);
-        this->addToGroup(tet);
-
-        if (1 == i) {
-            this->setTransformOriginPoint(quad[i].x * tile_size, quad[i].y * tile_size);
-        }
-    }
-
-    this->setPos((5 * tile_size) + 9, (0 * tile_size) - 6);
-
 }
 
 void
 tetrimino::keyPressEvent(QKeyEvent *event)
 {
     if (event->key() == Qt::Key_Left) {
-        setX(x() - tile_size);
-        if (collisionCheck()) {
-            this->setX(x() + tile_size);
+        setX(x()-pix_l);
+        if(collisionSide()) {
+            this->setX(x()+pix_l);
             return;
         }
     } else if (event->key() == Qt::Key_Right) {
-        setX(x() + tile_size);
-        if (collisionCheck()) {
-            this->setX(x() - tile_size);
+        setX(x()+pix_l);
+        if(collisionSide()) {
+            this->setX(x()-pix_l);
             return;
         }
     } else if (event->key() == Qt::Key_Up) {
-        setRotation(rotation() + 90);
-        if (collisionCheck()) {
-            this->setRotation(rotation() - 90);
+        setRotation(rotation()+90);
+        if(collisionSide()) {
+            this->setRotation(rotation()-90);
             return;
         }
     } else if (event->key() == Qt::Key_Down) {
-        setY(y() + tile_size);
-        if (collisionCheck()) {
-            this->setY(y() - tile_size);
+        setPos(x(),y()+pix_l);
+        if(collisionSide()) {
+            setY(y()-pix_l);
+            setToBoard();
             return;
         }
     }
 }
 
-bool
-tetrimino::collisionCheck()
+void
+tetrimino::drawBlocks()
 {
-    if (!(sceneBoundingRect().left() > tile_size) ||
-        !(sceneBoundingRect().right() < 12 * tile_size) ||
-        !(sceneBoundingRect().bottom() < 22 * tile_size))
-    {
-        qDebug() << "Collision";
-        return true;
-    } else {
-        return false;
+    QRect recto(pix_l*colour, 0, pix_l, pix_l);
+    QPixmap image(":/Pictures/images/tiles.png");
+    QPixmap copy ;
+    copy = image.copy(recto);
+    int n = colour;
+    for (int i = 0; i <4; i++) {
+        quad[i].x= figures[n][i] % 2;
+        quad[i].y= figures[n][i] / 2;
     }
+    for (int i=0; i <4; i++) {
+        QGraphicsPixmapItem * tet = new QGraphicsPixmapItem();
+        tet->setPixmap(copy);
+        tet->setPos(quad[i].x*pix_l,quad[i].y*pix_l);
+        this->addToGroup(tet);
+        if(i==1) {
+            this->setTransformOriginPoint(quad[i].x*pix_l,quad[i].y*pix_l);
+        }
+    }
+    this->setPos((-4*pix_l)+12,(-14*pix_l+9));
 }
 
 void
 tetrimino::moveDown()
 {
-    setY(y() + tile_size);
-    if (collisionCheck()) {
-        this->setY(y() - tile_size);
+    if(this->sceneBoundingRect().bottom()<190) {
+        setY(this->y()+pix_l);
+        if(collisionSide()) {
+            setY(this->y()-pix_l);
+            setToBoard();
+            return;
+        }
+    } else {
+        setToBoard();
         return;
     }
+}
+
+void
+tetrimino::setToBoard()
+{
+    this->clearFocus();
+    for(int i = 0; i<4; i++) {
+        gameboard->addToGroup(this->childItems().first());
+    }
+    if (!gameboard->gameOver()) {
+        int rand_colour = rand() % 6;
+        tetrimino *teto = new tetrimino(pix_l,rand_colour,gameboard);
+        scene()->addItem(teto);
+        delete this;
+        gameboard->checkLoop();
+    } else {
+        delete this;
+    }
+}
+
+bool
+tetrimino::collisionSide()
+{
+    if(!(sceneBoundingRect().left()>-144) || !(sceneBoundingRect().right()<54) || !(sceneBoundingRect().bottom()<189)) {
+        return true;
+    }
+    for(int i = 0; i<gameboard->childItems().length(); i++) {
+        if(gameboard->childItems().isEmpty()) {
+            return true;
+        } else {
+            for(int j = 0; j <4; j++) {
+                if(this->childItems()[j]->collidesWithItem(gameboard->childItems()[i])) {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
 }
