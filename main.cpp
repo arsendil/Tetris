@@ -14,7 +14,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     QGraphicsScene * scene = new QGraphicsScene();
 
-    QPixmap image(":/Pictures/images/background.png");
+    QPixmap image(":background.png");
     QGraphicsPixmapItem * back = new QGraphicsPixmapItem();
     back->setPixmap(image);
     back->setScale(1);

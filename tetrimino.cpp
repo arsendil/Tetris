@@ -50,7 +50,7 @@ void
 tetrimino::drawBlocks()
 {
     QRect recto(pix_l*colour, 0, pix_l, pix_l);
-    QPixmap image(":/Pictures/images/tiles.png");
+    QPixmap image(":tiles.png");
     QPixmap copy ;
     copy = image.copy(recto);
     int n = colour;
